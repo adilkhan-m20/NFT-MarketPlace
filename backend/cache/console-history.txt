@@ -1,0 +1,16 @@
+.exit
+console.log("Contract Address:", address);
+const address = await nftMarketplace.getAddress();
+await nftMarketplace.waitForDeployment();
+const nftMarketplace = await NFTMarketplace.deploy();
+const NFTMarketplace = await ethers.getContractFactory("NFTMarketPlace");
+.exit
+exit
+const NFTMarketplace = await ethers.getContractFactory("NFTMarketPlace");
+// Copy this address for your subgraph!
+console.log("Contract Address:", address);
+const address = await nftMarketplace.getAddress();
+await nftMarketplace.waitForDeployment();
+const nftMarketplace = await NFTMarketplace.deploy();
+const NFTMarketplace = await ethers.getContractFactory("NFTMarketplace");
+// Deploy and get address immediately
