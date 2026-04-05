@@ -1,4 +1,14 @@
-node_modules
+# =====================================
+# 📦 Node.js / Frontend
+# =====================================
+# Ignore only dependency and build folders
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.next/
+frontend/.nuxt/
+frontend/.cache/
+**/node_modules/
 .env
 
 # Hardhat files

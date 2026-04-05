@@ -1,6 +1,6 @@
 specVersion: 0.0.4
 schema:
-  file: ./schema.graphql
+  file: schema.graphql
 dataSources:
   - kind: ethereum
     name: NFTMarketPlace
@@ -19,7 +19,7 @@ dataSources:
         - ItemListed
       abis:
         - name: NFTMarketPlace
-          file: ./abis/NFTMarketPlace.json
+          file: NFTMarketPlace/NFTMarketPlace.json
       eventHandlers:
         - event: ItemBought(indexed address,indexed address,indexed uint256,uint256)
           handler: handleItemBought
@@ -27,4 +27,4 @@ dataSources:
           handler: handleItemCanceled
         - event: ItemListed(indexed address,indexed address,indexed uint256,uint256)
           handler: handleItemListed
-      file: ./src/mapping.ts
+      file: NFTMarketPlace/NFTMarketPlace.wasm
