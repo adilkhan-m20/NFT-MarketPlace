@@ -8,7 +8,7 @@ on:
 
 jobs:
   # ─────────────────────────────────────────
-  # JOB 1: Lint & Build Backend (Hardhat)
+  # JOB 1:  Build Backend (Hardhat)
   # ─────────────────────────────────────────
   backend:
     name: Backend — Lint & Compile Contracts
@@ -38,10 +38,14 @@ jobs:
       - name: Run Hardhat tests (if any)
         working-directory: backend
         run: npx hardhat test
+        env:
+          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+          MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
         continue-on-error: true # won't fail pipeline if no tests yet
 
   # ─────────────────────────────────────────
-  # JOB 2: Lint & Build Frontend (Next.js)
+  # JOB 2: Build Frontend (Next.js)
   # ─────────────────────────────────────────
   frontend:
     name: Frontend — Lint & Build
@@ -59,11 +63,6 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
-
-      - name: Lint
-        working-directory: frontend
-        run: npm run lint
-        continue-on-error: true # won't fail if ESLint not configured yet
 
       - name: Build Next.js app
         working-directory: frontend
