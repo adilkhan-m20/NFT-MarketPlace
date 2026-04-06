@@ -110,8 +110,6 @@ jobs:
           tags: ghcr.io/${{ github.repository_owner }}/nft-frontend:latest
           build-args: |
             NEXT_PUBLIC_CONTRACT_ADDRESS=${{ secrets.NEXT_PUBLIC_CONTRACT_ADDRESS }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   # ─────────────────────────────────────────
   # JOB 4: Deploy Contracts to Sepolia
