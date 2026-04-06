@@ -25,7 +25,7 @@ terraform {
 
 provider "vercel" {
   api_token = var.vercel_api_token
-  team_id   = var.vercel_team
+  team   = var.vercel_team_id
 }
 
 resource "vercel_project" "nft_marketplace" {
