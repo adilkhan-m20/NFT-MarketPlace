@@ -17,7 +17,7 @@ import { Toaster } from "react-hot-toast";
 const errorLink = onError(({ graphQLErrors, networkError }) => {
   if (graphQLErrors)
     graphQLErrors.forEach(({ message }) =>
-      console.log("[GraphQL error]:", message)
+      console.log("[GraphQL error]:", message),
     );
   if (networkError) console.log("[Network error]:", networkError);
 });
@@ -36,7 +36,7 @@ const apolloClient = new ApolloClient({
 
 const wagmiConfig = getDefaultConfig({
   appName: "NFT Marketplace",
-  projectId: "YOUR_WALLETCONNECT_PROJECT_ID",
+  projectId: "7903da26ddcca36d97bf2006d08795ae",
   chains: [sepolia],
   ssr: true,
 });
