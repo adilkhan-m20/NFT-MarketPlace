@@ -1,23 +1,21 @@
 # ── Stage 1: Install dependencies ───────────────────────────────
 FROM node:18-alpine AS deps
 
-WORKDIR /app/frontend
+WORKDIR /app
 
-COPY frontend/package*.json ./
+COPY package*.json ./
 RUN npm ci
 
 # ── Stage 2: Build ─────────────────────────────────────────────
 FROM node:18-alpine AS builder
 
-WORKDIR /app/frontend
+WORKDIR /app
 
-COPY --from=deps /app/frontend/node_modules ./node_modules
-COPY frontend/ .
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
-ARG NEXT_PUBLIC_CONTRACT_ADDRESS=0x0000000000000000000000000000000000000000
+ARG NEXT_PUBLIC_CONTRACT_ADDRESS
 ENV NEXT_PUBLIC_CONTRACT_ADDRESS=$NEXT_PUBLIC_CONTRACT_ADDRESS
-
-RUN echo "CONTRACT: $NEXT_PUBLIC_CONTRACT_ADDRESS"
 
 RUN npm run build
 
@@ -28,16 +26,13 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy package.json
-COPY frontend/package*.json ./
-RUN npm ci 
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-# Copy built app
-COPY --from=builder /app/frontend/.next ./.next
+# Copy build output
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/next.config.js ./next.config.js
 
 EXPOSE 3000
-
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
 
 CMD ["npm", "start"]
