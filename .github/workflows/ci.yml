@@ -13,6 +13,29 @@ permissions:
 
 jobs:
   # ─────────────────────────────────────────
+  # NEW JOB: Infrastructure Setup (Terraform)
+  # ─────────────────────────────────────────
+  terraform:
+    name: Infrastructure setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init & Apply
+        working-directory: ./iac
+        run: |
+          terraform init
+          terraform apply -auto-approve
+        env:
+          TF_VAR_vercel_api_token: ${{ secrets.VERCEL_TOKEN }}
+          TF_VAR_contract_address: ${{ secrets.NEXT_PUBLIC_CONTRACT_ADDRESS }}
+          TF_VAR_vercel_team_id: ${{ secrets.VERCEL_ORG_ID }}
+
+  # ─────────────────────────────────────────
   # JOB 1: Compile & Test Contracts (Hardhat)
   # ─────────────────────────────────────────
   backend:
@@ -55,6 +78,7 @@ jobs:
   frontend:
     name: Frontend — Build
     runs-on: ubuntu-latest
+    needs: [terraform]
 
     steps:
       - name: Checkout code
@@ -84,7 +108,7 @@ jobs:
   docker:
     name: Build & Push Frontend Docker Image
     runs-on: ubuntu-latest
-    needs: [backend, frontend]
+    needs: [backend, frontend, terraform]
     if: github.ref == 'refs/heads/main'
 
     steps:
