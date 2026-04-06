@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
-import { useAccount, useChainId, usePublicClient, useWalletClient } from "wagmi";
-import { ethers } from "ethers";
+import {
+  useAccount,
+  useChainId,
+  usePublicClient,
+  useWalletClient,
+} from "wagmi";
+import { parseEther } from "ethers";
 import toast from "react-hot-toast";
 import { formatEther } from "viem";
 
@@ -35,7 +40,7 @@ export default function SellNFT() {
     }
 
     try {
-      const priceInWei = ethers.parseEther(price);
+      const priceInWei = parseEther(price);
 
       // 1. Approve
       const approveTx = await walletClient.writeContract({
@@ -139,15 +144,11 @@ export default function SellNFT() {
           className="border p-2 rounded"
         />
 
-        <button className="bg-blue-500 text-white p-2 rounded">
-          List NFT
-        </button>
+        <button className="bg-blue-500 text-white p-2 rounded">List NFT</button>
       </form>
 
       <div className="mt-6">
-        <p className="mb-2">
-          Proceeds: {formatEther(proceeds)} ETH
-        </p>
+        <p className="mb-2">Proceeds: {formatEther(proceeds)} ETH</p>
 
         {proceeds !== "0" ? (
           <button
