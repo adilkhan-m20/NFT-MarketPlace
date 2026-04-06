@@ -12,7 +12,7 @@
     "@tanstack/react-query": "^5.96.2",
     "graphql": "^16.13.2",
     "moralis-v1": "^1.13.0",
-    "next": "15.5.4",
+    "next": "^16.2.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hot-toast": "^2.6.0",
