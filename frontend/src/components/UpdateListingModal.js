@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { usePublicClient, useWalletClient } from "wagmi";
-import { ethers } from "ethers";
+import { parseEther } from "viem";
 import toast from "react-hot-toast";
 
 import nftMarketPlaceAbi from "../constants/NFTMarketPlace.json";
@@ -27,7 +27,7 @@ export default function UpdateListingModal({
     }
 
     try {
-      const price = ethers.parseEther(priceToUpdateListingWith);
+      const price = parseEther(priceToUpdateListingWith);
 
       const hash = await walletClient.writeContract({
         address: marketplaceAddress,

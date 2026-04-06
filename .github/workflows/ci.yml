@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch: # adds "Run workflow" button for manual contract deploys
 
 permissions:
   contents: read
@@ -12,10 +13,10 @@ permissions:
 
 jobs:
   # ─────────────────────────────────────────
-  # JOB 1:  Build Backend (Hardhat)
+  # JOB 1: Compile & Test Contracts (Hardhat)
   # ─────────────────────────────────────────
   backend:
-    name: Backend — Compile Contracts
+    name: Backend — Compile & Test Contracts
     runs-on: ubuntu-latest
 
     steps:
@@ -25,11 +26,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 20
 
       - name: Install dependencies
         working-directory: backend
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Compile Solidity contracts
         working-directory: backend
@@ -39,20 +40,20 @@ jobs:
           MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
-      - name: Run Hardhat tests (if any)
+      - name: Run Hardhat tests
         working-directory: backend
         run: npx hardhat test
         env:
           SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
           MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-        continue-on-error: true # won't fail pipeline if no tests yet
+        continue-on-error: true
 
   # ─────────────────────────────────────────
   # JOB 2: Build Frontend (Next.js)
   # ─────────────────────────────────────────
   frontend:
-    name: Frontend —  Build
+    name: Frontend — Build
     runs-on: ubuntu-latest
 
     steps:
@@ -66,22 +67,25 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Build Next.js app
         working-directory: frontend
         run: npm run build
         env:
           NEXT_PUBLIC_CONTRACT_ADDRESS: ${{ secrets.NEXT_PUBLIC_CONTRACT_ADDRESS }}
+          NEXT_TELEMETRY_DISABLED: 1
 
   # ─────────────────────────────────────────
-  # JOB 3: Docker Build & Push (runs after both jobs pass)
+  # JOB 3: Docker Build & Push (frontend only)
+  # Backend has no server to containerize —
+  # contracts live on-chain, Hardhat runs in CI
   # ─────────────────────────────────────────
   docker:
-    name: Build & Push Docker Images
+    name: Build & Push Frontend Docker Image
     runs-on: ubuntu-latest
-    needs: [backend, frontend] # only runs if both above pass
-    if: github.ref == 'refs/heads/main' # only on main branch, not PRs
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout code
@@ -92,15 +96,10 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }} # auto-provided by GitHub, no setup needed
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & push backend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/nft-backend:latest
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build & push frontend image
         uses: docker/build-push-action@v5
@@ -109,4 +108,52 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/nft-frontend:latest
-          build-args: NEXT_PUBLIC_CONTRACT_ADDRESS=${{ secrets.NEXT_PUBLIC_CONTRACT_ADDRESS }}
+          build-args: |
+            NEXT_PUBLIC_CONTRACT_ADDRESS=${{ secrets.NEXT_PUBLIC_CONTRACT_ADDRESS }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─────────────────────────────────────────
+  # JOB 4: Deploy Contracts to Sepolia
+  # Only runs when manually triggered from
+  # GitHub Actions UI — never on every push
+  # ─────────────────────────────────────────
+  deploy-contracts:
+    name: Deploy Contracts to Sepolia
+    runs-on: ubuntu-latest
+    needs: [backend]
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci --legacy-peer-deps
+
+      - name: Deploy BasicNft to Sepolia
+        working-directory: backend
+        run: npx hardhat run deploy/01-deploy-BasicNft.js --network sepolia
+        env:
+          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Deploy NftMarketPlace to Sepolia
+        working-directory: backend
+        run: npx hardhat run deploy/02-deploy-NftMarketPlace.js --network sepolia
+        env:
+          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Update frontend contract addresses
+        working-directory: backend
+        run: npx hardhat run deploy/03-update-front-end.js --network sepolia
+        env:
+          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}

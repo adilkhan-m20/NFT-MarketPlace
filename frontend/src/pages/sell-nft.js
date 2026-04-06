@@ -5,7 +5,7 @@ import {
   usePublicClient,
   useWalletClient,
 } from "wagmi";
-import { parseEther } from "ethers";
+import { parseEther } from "viem";
 import toast from "react-hot-toast";
 import { formatEther } from "viem";
 
